@@ -9,7 +9,6 @@ pub enum Either<A, B> {
 pub struct Or<Iter: Iterator + Clone, A: Parser<Iter>, B: Parser<Iter>>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
     B: Parser<Iter>,
 {
@@ -21,7 +20,6 @@ where
 impl<Iter, A, B> Or<Iter, A, B>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
     B: Parser<Iter>,
 {
@@ -37,7 +35,6 @@ where
 impl<Iter, A, B> Parser<Iter> for Or<Iter, A, B>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
     B: Parser<Iter>,
 {

@@ -3,7 +3,6 @@ use crate::*;
 pub struct Many<Iter, A>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
 {
     a: A,
@@ -13,7 +12,6 @@ where
 impl<Iter, A> Many<Iter, A>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
 {
     pub(crate) fn new(a: A) -> Self {
@@ -27,7 +25,6 @@ where
 impl<Iter, A> Parser<Iter> for Many<Iter, A>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
 {
     type Output = Vec<A::Output>;

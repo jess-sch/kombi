@@ -7,7 +7,6 @@ pub trait Parser<Iter>
 where
     Self: Sized,
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
 {
     type Output;
 
@@ -82,7 +81,6 @@ where
 impl<Iter, F, T> Parser<Iter> for F
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     F: Fn(Iter) -> Option<(Iter, T)>,
 {
     type Output = T;
@@ -95,7 +93,6 @@ where
 impl<Iter> Parser<Iter> for ()
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
 {
     type Output = ();
     fn parse(&self, i: Iter) -> Option<(Iter, ())> {

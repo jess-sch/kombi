@@ -3,7 +3,6 @@ use crate::*;
 pub struct Maybe<Iter, A>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
 {
     a: A,
@@ -13,7 +12,6 @@ where
 impl<Iter, A> Maybe<Iter, A>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
 {
     pub(crate) fn new(a: A) -> Self {
@@ -27,7 +25,6 @@ where
 impl<Iter, A> Parser<Iter> for Maybe<Iter, A>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
 {
     type Output = Option<A::Output>;
@@ -54,7 +51,10 @@ mod tests {
 
     #[test]
     fn negative() {
-        assert_eq!("abc".maybe().then('a').parse_str("a"), Some(("", (None, 'a'))))
+        assert_eq!(
+            "abc".maybe().then('a').parse_str("a"),
+            Some(("", (None, 'a')))
+        )
     }
 
     #[test]

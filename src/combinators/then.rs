@@ -3,7 +3,6 @@ use crate::*;
 pub struct Then<Iter, A, B>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
     B: Parser<Iter>,
 {
@@ -15,7 +14,6 @@ where
 impl<Iter, A, B> Then<Iter, A, B>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
     B: Parser<Iter>,
 {
@@ -31,7 +29,6 @@ where
 impl<Iter, A, B> Parser<Iter> for Then<Iter, A, B>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
     B: Parser<Iter>,
 {
@@ -46,7 +43,6 @@ where
 #[cfg(test)]
 mod tests {
     use crate::prelude::*;
-    
     #[test]
     fn positive() {
         assert_eq!(('a'.then('b')).parse_str("abc"), Some(("c", ('a', 'b'))))

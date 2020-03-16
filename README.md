@@ -6,7 +6,7 @@ Included batteries:
 * `Parser` trait
     * Implementation for `&str`
     * Implementation for `char`
-    * Implementation for `<T, Iter: Iterator<Item: Clone> + Clone> Fn(Iter) -> Option<(Iter, T)>`
+    * Implementation for `<T, Iter: Iterator + Clone> Fn(Iter) -> Option<(Iter, T)>`
 * `()` to ensure that there is nothing left to parse
 * `Many` for repeated occurrences
 * `Maybe` for optionals (e.g. `' '.maybe()` to allow, but not require, a space)

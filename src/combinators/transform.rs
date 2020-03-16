@@ -3,7 +3,6 @@ use crate::*;
 pub struct Transform<Iter, A, F, T>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
     F: Fn(A::Output) -> Option<T>,
 {
@@ -15,7 +14,6 @@ where
 impl<Iter, A, F, T> Transform<Iter, A, F, T>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
     F: Fn(A::Output) -> Option<T>,
 {
@@ -31,7 +29,6 @@ where
 impl<Iter, A, F, T> Parser<Iter> for Transform<Iter, A, F, T>
 where
     Iter: Iterator + Clone,
-    Iter::Item: Clone,
     A: Parser<Iter>,
     F: Fn(A::Output) -> Option<T>,
 {
