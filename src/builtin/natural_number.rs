@@ -27,3 +27,21 @@ impl Parser for NaturalNumber {
         Some((s, val?))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::Parser;
+
+    #[test]
+    fn positive() {
+        assert_eq!(
+            <()>::natural_number().parse("1234500b"),
+            Some(("b", 1234500))
+        )
+    }
+
+    #[test]
+    fn negative() {
+        assert_eq!(<()>::natural_number().parse("b1234500"), None)
+    }
+}
