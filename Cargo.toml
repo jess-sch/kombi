@@ -1,12 +1,13 @@
 [package]
 name = "kombi"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Jess Schallenberg <jess.schallenberg@gmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "A Parser Combinator Library"
 readme = "README.md"
 repository = "https://github.com/jess-sch/kombi"
+documentation = "https://docs.rs/kombi"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
