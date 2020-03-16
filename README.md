@@ -1,4 +1,4 @@
-# kombi ![](https://docs.rs/kombi/badge.svg)
+# kombi [![Foo](https://docs.rs/kombi/badge.svg)](https://docs.rs/kombi)
 
 A Parser Combinator Library for Rust.
 
