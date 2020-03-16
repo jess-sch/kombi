@@ -1,135 +1,146 @@
-pub mod builtin;
-pub use builtin::Either;
+pub(crate) use std::marker::PhantomData;
+pub mod combinators;
+pub mod prelude;
+pub mod str;
 
-#[cfg(test)]
-mod tests {
-    use crate::Parser;
-
-    #[test]
-    fn parse_str() {
-        assert_eq!(
-            "abc".transform(|x| Some(x)).parse("abcdef").unwrap(),
-            ("def", "abc")
-        );
-        assert_eq!("abcdef".transform(|x| Some(x)).parse("abc"), None);
-    }
-
-    #[test]
-    fn parse_char() {
-        assert_eq!('👱'.parse("a"), None);
-        assert_eq!('👱'.parse("👱abc"), Some(("abc", '👱')));
-    }
-
-    #[test]
-    fn parse_void() {
-        assert_eq!(().parse(""), Some(("", ())));
-        assert_eq!(().parse(" "), None);
-    }
-}
-
-pub trait Parser
+pub trait Parser<Iter>
 where
     Self: Sized,
+    Iter: Iterator + Clone,
+    Iter::Item: Clone,
 {
     type Output;
 
-    /// Tries to parse the provided string. Returns the
-    /// unparsed rest of the string and a value on success.
-    fn parse<'a>(&self, s: &'a str) -> Option<(&'a str, Self::Output)>;
+    /// Tries to parse the provided Iterator. Returns the
+    /// unparsed rest of the data and a value on success.
+    fn parse(&self, i: Iter) -> Option<(Iter, Self::Output)>;
+
+    /// Runs the Parser repeatedly until it fails. The results are stored in a `Vec`.
+    fn many(self) -> combinators::Many<Iter, Self> {
+        combinators::Many::new(self)
+    }
+
+    /// Make the Parser optional, so that it will succeed even if it fails.
+    fn maybe(self) -> combinators::Maybe<Iter, Self> {
+        combinators::Maybe::new(self)
+    }
+
+    /// Require that either this or the provided Parser succeed.
+    /// If both succeed, the one that has consumed the most bytes will be chosen.
+    fn or<Other: Parser<Iter>>(self, other: Other) -> combinators::Or<Iter, Self, Other> {
+        combinators::Or::new(self, other)
+    }
 
     /// Chain two Parsers together, requiring both to succeed.
-    fn then<Other: Parser>(self, other: Other) -> builtin::Then<Self, Other> {
-        builtin::Then::new(self, other)
+    fn then<Other: Parser<Iter>>(self, other: Other) -> combinators::Then<Iter, Self, Other> {
+        combinators::Then::new(self, other)
     }
 
     /// Apply the provided function to the Output of this Parser.
     fn transform<F: Fn(Self::Output) -> Option<T>, T>(
         self,
         f: F,
-    ) -> builtin::Transform<Self, F, T> {
-        builtin::Transform::new(self, f)
-    }
-
-    /// Require that either this or the provided Parser succeed.
-    /// If both succeed, the one that has consumed the most bytes will be chosen.
-    fn or<Other: Parser>(self, other: Other) -> builtin::Or<Self, Other> {
-        builtin::Or::new(self, other)
-    }
-
-    /// Make the Parser optional, so that it will succeed even if it fails.
-    fn maybe(self) -> builtin::Maybe<Self> {
-        builtin::Maybe::new(self)
-    }
-
-    /// Runs the Parser repeatedly until it fails. The results are stored in a `Vec`.
-    fn many(self) -> builtin::Many<Self>{
-        builtin::Many::new(self)
-    }
-
-    /// Match for whole numbers >=0
-    fn natural_number() -> builtin::NaturalNumber {
-        builtin::NaturalNumber
-    }
-}
-
-/// Implements Parser for every `Fn(&str)->Option<(&str,T)>`.
-impl<T, F: Fn(&str) -> Option<(&str, T)>> Parser for F {
-    type Output = T;
-    fn parse<'a>(&self, s: &'a str) -> Option<(&'a str, Self::Output)> {
-        (self)(s)
+    ) -> combinators::Transform<Iter, Self, F, T> {
+        combinators::Transform::new(self, f)
     }
 }
 
 /// Matches for a character.
-impl Parser for char {
+impl<Iter> Parser<Iter> for char
+where
+    Iter: Iterator<Item = char> + Clone,
+{
     type Output = char;
-    fn parse<'a>(&self, s: &'a str) -> Option<(&'a str, Self::Output)> {
-        #[cfg(feature = "str_strip")]
-        {
-            Some((s.strip_prefix(*self)?, *self));
-        }
-        #[cfg(not(feature = "str_strip"))]
-        {
-            let mut chars = s.chars();
-            if chars.next()? == *self {
-                Some((chars.as_str(), *self))
-            } else {
-                None
-            }
+    fn parse(&self, mut i: Iter) -> Option<(Iter, Self::Output)> {
+        if i.next()? == *self {
+            Some((i, *self))
+        } else {
+            None
         }
     }
 }
 
 /// Matches for a string.
-impl<'x> Parser for &'x str {
-    type Output = &'x str;
-    fn parse<'a>(&self, s: &'a str) -> Option<(&'a str, Self::Output)> {
-        #[cfg(feature = "str_strip")]
-        {
-            Some((s.strip_prefix(*self)?, *self))
-        }
-        #[cfg(not(feature = "str_strip"))]
-        {
-            if s.len() < self.len() {
+impl<'a, Iter> Parser<Iter> for &'a str
+where
+    Iter: Iterator<Item = char> + Clone,
+{
+    type Output = &'a str;
+    fn parse(&self, mut i: Iter) -> Option<(Iter, Self::Output)> {
+        let mut x = self.chars();
+        while let Some(c) = x.next() {
+            if i.clone().next()? == c {
+                i.next()?;
+            } else {
                 return None;
             }
-            if *self == &s[..self.len()] {
-                Some((&s[self.len()..], self))
-            } else {
-                None
-            }
         }
+        Some((i, self))
+    }
+}
+
+impl<Iter, F, T> Parser<Iter> for F
+where
+    Iter: Iterator + Clone,
+    Iter::Item: Clone,
+    F: Fn(Iter) -> Option<(Iter, T)>,
+{
+    type Output = T;
+    fn parse(&self, i: Iter) -> Option<(Iter, Self::Output)> {
+        (self)(i)
     }
 }
 
 /// `()` ensures that there is no remaining data.
-impl Parser for () {
+impl<Iter> Parser<Iter> for ()
+where
+    Iter: Iterator + Clone,
+    Iter::Item: Clone,
+{
     type Output = ();
-    fn parse<'a>(&self, s: &'a str) -> Option<(&'a str, ())> {
-        if s.is_empty() {
-            Some((s, ()))
+    fn parse(&self, i: Iter) -> Option<(Iter, ())> {
+        if i.clone().next().is_none() {
+            Some((i, ()))
         } else {
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+
+    #[test]
+    fn parse_str_positive() {
+        assert_eq!(
+            "abc".transform(|x| Some(x)).parse_str("abcdef").unwrap(),
+            ("def", "abc")
+        )
+    }
+
+    #[test]
+    fn parse_str_negative() {
+        assert_eq!("abcdef".transform(|x| Some(x)).parse_str("abc"), None)
+    }
+
+    #[test]
+    fn parse_char_positive() {
+        assert_eq!('👱'.parse_str("👱abc"), Some(("abc", '👱')))
+    }
+
+    #[test]
+    fn parse_char_negative() {
+        assert_eq!('👱'.parse_str("a"), None)
+    }
+
+    #[test]
+    fn parse_void_positive() {
+        assert_eq!(().parse_str(""), Some(("", ())))
+    }
+
+    #[test]
+    fn parse_void_negative() {
+        assert_eq!(().parse_str(" "), None)
     }
 }

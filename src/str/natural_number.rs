@@ -1,14 +1,16 @@
-use crate::Parser;
+use crate::*;
 
 pub struct NaturalNumber;
 
-impl Parser for NaturalNumber {
+impl<Iter> Parser<Iter> for NaturalNumber
+where
+    Iter: Iterator<Item = char> + Clone,
+{
     type Output = u128;
-    fn parse<'a>(&self, mut s: &'a str) -> Option<(&'a str, Self::Output)> {
-        let mut chars = s.chars();
+    fn parse(&self, mut i: Iter) -> Option<(Iter, Self::Output)> {
         let mut val = None;
-        while let Some(x) = chars.next() {
-            let c = match x {
+        while let Some(x) = i.clone().next() {
+            let x = match x {
                 '0' => 0,
                 '1' => 1,
                 '2' => 2,
@@ -21,27 +23,27 @@ impl Parser for NaturalNumber {
                 '9' => 9,
                 _ => break,
             };
-            val = val.or(Some(0)).map(|x| x * 10 + c);
-            s = chars.as_str();
+            val = val.or(Some(0)).map(|o| o * 10 + x);
+            i.next();
         }
-        Some((s, val?))
+        Some((i, val?))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::Parser;
+    use crate::prelude::*;
 
     #[test]
     fn positive() {
         assert_eq!(
-            <()>::natural_number().parse("1234500b"),
+            crate::str::NaturalNumber.parse_str("1234500b"),
             Some(("b", 1234500))
         )
     }
 
     #[test]
     fn negative() {
-        assert_eq!(<()>::natural_number().parse("b1234500"), None)
+        assert_eq!(crate::str::NaturalNumber.parse_str("b1234500"), None)
     }
 }
