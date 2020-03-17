@@ -9,7 +9,8 @@ where
     type Output = u128;
     fn parse(&self, mut i: Iter) -> Option<(Iter, Self::Output)> {
         let mut val = None;
-        while let Some(x) = i.clone().next() {
+        let mut i_peek = i.clone();
+        while let Some(x) = i_peek.next() {
             let x = match x {
                 '0' => 0,
                 '1' => 1,

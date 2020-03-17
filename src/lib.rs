@@ -68,9 +68,7 @@ where
     fn parse(&self, mut i: Iter) -> Option<(Iter, Self::Output)> {
         let mut x = self.chars();
         while let Some(c) = x.next() {
-            if i.clone().next()? == c {
-                i.next()?;
-            } else {
+            if i.next()? != c {
                 return None;
             }
         }
@@ -95,8 +93,8 @@ where
     Iter: Iterator + Clone,
 {
     type Output = ();
-    fn parse(&self, i: Iter) -> Option<(Iter, ())> {
-        if i.clone().next().is_none() {
+    fn parse(&self, mut i: Iter) -> Option<(Iter, ())> {
+        if i.next().is_none() {
             Some((i, ()))
         } else {
             None
